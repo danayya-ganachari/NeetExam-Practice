@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "773566336522",
+    "project_id": "neetexamspractice",
+    "storage_bucket": "neetexamspractice.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773566336522:android:c0b753fc302d5a66d9d9f3",
+        "android_client_info": {
+          "package_name": "com.example.neet_exam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "773566336522-qnks0nva0p8okhfn59dei3u04h2364pg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoUE1og5-EsiwYM1FLMEp1pgDYqpvDeao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "773566336522-qnks0nva0p8okhfn59dei3u04h2364pg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

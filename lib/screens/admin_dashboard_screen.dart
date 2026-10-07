@@ -1,7 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'question_upload_screen.dart';
 import 'exam_management_screen.dart';
+import 'question_upload_screen.dart';
 import 'student_management_screen.dart';
 import 'results_screen.dart';
 
@@ -13,6 +14,18 @@ class AdminDashboardScreen extends StatelessWidget {
     required this.username,
   });
 
+  Future<void> logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).popUntil(
+      (route) => route.isFirst,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,163 +33,154 @@ class AdminDashboardScreen extends StatelessWidget {
         title: const Text('Admin Dashboard'),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.of(context).popUntil(
-                (route) => route.isFirst,
-              );
-            },
+            onPressed: () => logout(context),
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 1100,
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Welcome, $username',
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile =
+              constraints.maxWidth < 600;
+
+          final horizontalPadding =
+              isMobile ? 16.0 : 30.0;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(
+              horizontalPadding,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(
+                  maxWidth: 1100,
                 ),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  'NEET Exam Administration',
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-
-                const SizedBox(height: 35),
-
-                GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  shrinkWrap: true,
-                  physics:
-                      const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 2.2,
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.stretch,
                   children: [
-                    _AdminCard(
-                      icon: Icons.edit_calendar,
-                      title: 'Manage Exams',
-                      description:
-                          'Create and manage multiple examinations.',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ExamManagementScreen(),
-                          ),
-                        );
-                      },
+                    const SizedBox(height: 25),
+
+                    Text(
+                      'Admin Dashboard',
+                      style: TextStyle(
+                        fontSize:
+                            isMobile ? 26 : 32,
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                      textAlign:
+                          TextAlign.center,
                     ),
 
-                    _AdminCard(
-                      icon: Icons.add_box,
-                      title: 'Upload Questions',
-                      description:
-                          'Add questions to a selected exam.',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const QuestionUploadScreen(),
-                          ),
-                        );
-                      },
+                    const SizedBox(height: 10),
+
+                    Text(
+                      'Welcome, $username',
+                      style: TextStyle(
+                        fontSize:
+                            isMobile ? 16 : 18,
+                      ),
+                      textAlign:
+                          TextAlign.center,
                     ),
 
-                    _AdminCard(
-                      icon: Icons.people,
-                      title: 'Students',
-                      description:
-                          'Monitor students and their exam status.',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const StudentManagementScreen(),
-                          ),
-                        );
-                      },
-                    ),
+                    const SizedBox(height: 35),
 
-                    _AdminCard(
-                      icon: Icons.bar_chart,
-                      title: 'Results',
-                      description:
-                          'View student marks and results.',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ResultsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 35),
-
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                    GridView.count(
+                      crossAxisCount:
+                          isMobile ? 1 : 2,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20,
+                      shrinkWrap: true,
+                      physics:
+                          const NeverScrollableScrollPhysics(),
+                      childAspectRatio:
+                          isMobile ? 2.8 : 2.2,
                       children: [
-                        const Text(
-                          'Admin Workflow',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        _AdminCard(
+                          icon:
+                              Icons.edit_calendar,
+                          title: 'Manage Exams',
+                          subtitle:
+                              'Create, edit and schedule exams',
+                          onTap: () {
+                            Navigator.of(context)
+                                .push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        const ExamManagementScreen(),
+                              ),
+                            );
+                          },
                         ),
 
-                        const SizedBox(height: 15),
-
-                        const Text(
-                          '1. Create an exam',
+                        _AdminCard(
+                          icon:
+                              Icons.upload_file,
+                          title:
+                              'Upload Questions',
+                          subtitle:
+                              'Add questions and options',
+                          onTap: () {
+                            Navigator.of(context)
+                                .push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        const QuestionUploadScreen(),
+                              ),
+                            );
+                          },
                         ),
 
-                        const Text(
-                          '2. Select the exam',
+                        _AdminCard(
+                          icon: Icons.people,
+                          title: 'Students',
+                          subtitle:
+                              'View student activity',
+                          onTap: () {
+                            Navigator.of(context)
+                                .push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        const StudentManagementScreen(),
+                              ),
+                            );
+                          },
                         ),
 
-                        const Text(
-                          '3. Add questions',
-                        ),
-
-                        const Text(
-                          '4. Add figures or diagrams',
-                        ),
-
-                        const Text(
-                          '5. Publish the exam',
+                        _AdminCard(
+                          icon:
+                              Icons.bar_chart,
+                          title: 'Results',
+                          subtitle:
+                              'View exam results',
+                          onTap: () {
+                            Navigator.of(context)
+                                .push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        const ResultsScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
-                  ),
+
+                    const SizedBox(height: 30),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -185,32 +189,48 @@ class AdminDashboardScreen extends StatelessWidget {
 class _AdminCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String description;
+  final String subtitle;
   final VoidCallback onTap;
 
   const _AdminCard({
     required this.icon,
     required this.title,
-    required this.description,
+    required this.subtitle,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 3,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 50,
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(12),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer,
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onPrimaryContainer,
+                ),
               ),
 
-              const SizedBox(width: 20),
+              const SizedBox(width: 18),
 
               Expanded(
                 child: Column(
@@ -221,22 +241,36 @@ class _AdminCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
 
                     Text(
-                      description,
+                      subtitle,
                       maxLines: 2,
                       overflow:
                           TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 18,
               ),
             ],
           ),

@@ -19,8 +19,10 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   }
 
   void login() {
-    final username = usernameController.text.trim();
-    final password = passwordController.text;
+  final username =
+    usernameController.text.trim().toLowerCase();
+
+debugPrint('USERNAME RECEIVED: [$username]');    final password = passwordController.text;
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter username and password')),
