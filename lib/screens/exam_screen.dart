@@ -1,121 +1,79 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-
 import '../data/exam_data.dart';
 
 class ExamScreen extends StatefulWidget {
   final String username;
   final Exam exam;
-
-  const ExamScreen({
-    super.key,
-    required this.username,
-    required this.exam,
-  });
-
+  const ExamScreen({super.key, required this.username, required this.exam});
   @override
   State<ExamScreen> createState() => _ExamScreenState();
 }
 
 class _ExamScreenState extends State<ExamScreen> {
   int currentQuestion = 0;
-
   late List<int?> answers;
-
   late int remainingSeconds;
-
   Timer? timer;
-
   bool submitted = false;
-
   @override
   void initState() {
     super.initState();
-
-    answers = List<int?>.filled(
-      widget.exam.questions.length,
-      null,
-    );
-
-    remainingSeconds =
-        widget.exam.durationMinutes * 60;
-
+    answers = List<int?>.filled(widget.exam.questions.length, null);
+    remainingSeconds = widget.exam.durationMinutes * 60;
     startTimer();
   }
 
   void startTimer() {
-    timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-
-        if (remainingSeconds <= 0) {
-          timer.cancel();
-          submitExam();
-          return;
-        }
-
-        setState(() {
-          remainingSeconds--;
-        });
-      },
-    );
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (remainingSeconds <= 0) {
+        timer.cancel();
+        submitExam();
+        return;
+      }
+      setState(() {
+        remainingSeconds--;
+      });
+    });
   }
 
   String formatTime(int seconds) {
     final hours = seconds ~/ 3600;
-
-    final minutes =
-        (seconds % 3600) ~/ 60;
-
-    final remaining =
-        seconds % 60;
-
+    final minutes = (seconds % 3600) ~/ 60;
+    final remaining = seconds % 60;
     if (hours > 0) {
       return '${hours.toString().padLeft(2, '0')}:'
           '${minutes.toString().padLeft(2, '0')}:'
           '${remaining.toString().padLeft(2, '0')}';
     }
-
     return '${minutes.toString().padLeft(2, '0')}:'
         '${remaining.toString().padLeft(2, '0')}';
   }
 
   void submitExam() {
-    if (submitted) {
-      return;
-    }
-
+    if (submitted) return;
     submitted = true;
-
     timer?.cancel();
-
     int correct = 0;
     int wrong = 0;
     int unanswered = 0;
-
     for (int i = 0; i < answers.length; i++) {
       final selected = answers[i];
-
       if (selected == null) {
         unanswered++;
-      } else if (
-          selected ==
-          widget.exam.questions[i].correctAnswer) {
+      } else if (selected == widget.exam.questions[i].correctAnswer) {
         correct++;
       } else {
         wrong++;
       }
     }
-
     final marks =
         (correct * widget.exam.positiveMarks) -
         (wrong * widget.exam.negativeMarks);
-
     ExamData.results.add(
       StudentResult(
         username: widget.username,
@@ -127,7 +85,6 @@ class _ExamScreenState extends State<ExamScreen> {
         marks: marks,
       ),
     );
-
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => ExamResultScreen(
@@ -143,18 +100,12 @@ class _ExamScreenState extends State<ExamScreen> {
   }
 
   Future<bool> handleBack() async {
-    if (submitted) {
-      return true;
-    }
-
+    if (submitted) return true;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'You cannot exit the exam after starting it.',
-        ),
+        content: Text('You cannot exit the exam after starting it.'),
       ),
     );
-
     return false;
   }
 
@@ -169,18 +120,10 @@ class _ExamScreenState extends State<ExamScreen> {
     if (widget.exam.questions.isEmpty) {
       return PopScope(
         canPop: false,
-        onPopInvokedWithResult: (
-          didPop,
-          result,
-        ) {
+        onPopInvokedWithResult: (didPop, result) {
           if (!didPop) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'This exam has no questions.',
-                ),
-              ),
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('This exam has no questions.')),
             );
           }
         },
@@ -192,24 +135,16 @@ class _ExamScreenState extends State<ExamScreen> {
           body: const Center(
             child: Text(
               'No questions available for this exam.',
-              style: TextStyle(
-                fontSize: 20,
-              ),
+              style: TextStyle(fontSize: 20),
             ),
           ),
         ),
       );
     }
-
-    final question =
-        widget.exam.questions[currentQuestion];
-
+    final question = widget.exam.questions[currentQuestion];
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (
-        didPop,
-        result,
-      ) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           handleBack();
         }
@@ -220,21 +155,12 @@ class _ExamScreenState extends State<ExamScreen> {
           title: Text(widget.exam.title),
           actions: [
             Container(
-              margin: const EdgeInsets.only(
-                right: 20,
-              ),
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
+              margin: const EdgeInsets.only(right: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: remainingSeconds <= 60
-                      ? Colors.red
-                      : Colors.grey,
+                  color: remainingSeconds <= 60 ? Colors.red : Colors.grey,
                 ),
               ),
               child: Row(
@@ -242,23 +168,15 @@ class _ExamScreenState extends State<ExamScreen> {
                   Icon(
                     Icons.timer,
                     size: 20,
-                    color: remainingSeconds <= 60
-                        ? Colors.red
-                        : null,
+                    color: remainingSeconds <= 60 ? Colors.red : null,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    formatTime(
-                      remainingSeconds,
-                    ),
+                    formatTime(remainingSeconds),
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
-                      color:
-                          remainingSeconds <= 60
-                              ? Colors.red
-                              : null,
+                      fontWeight: FontWeight.bold,
+                      color: remainingSeconds <= 60 ? Colors.red : null,
                     ),
                   ),
                 ],
@@ -268,156 +186,98 @@ class _ExamScreenState extends State<ExamScreen> {
         ),
         body: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 900,
-            ),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Question '
-                    '${currentQuestion + 1} '
-                    'of '
-                    '${widget.exam.questions.length}',
+                    'Question ${currentQuestion + 1} '
+                    'of ${widget.exam.questions.length}',
                     style: const TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   Card(
                     child: Padding(
-                      padding:
-                          const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             question.question,
-                            style:
-                                const TextStyle(
+                            style: const TextStyle(
                               fontSize: 22,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-
-                          if (question.imagePath !=
-                              null) ...[
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            _QuestionImage(
-                              imagePath:
-                                  question.imagePath!,
-                            ),
+                          if (question.imagePath != null) ...[
+                            const SizedBox(height: 20),
+                            _QuestionImage(imagePath: question.imagePath!),
                           ],
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   Expanded(
-                    child: ListView.builder(
-                      itemCount:
-                          question.options.length,
-                      itemBuilder:
-                          (context, index) {
-                        return Card(
-                          child:
-                              RadioListTile<int>(
-                            value: index,
-                            groupValue:
-                                answers[
-                                    currentQuestion],
-                            title: Text(
-                              question
-                                  .options[index],
-                              style:
-                                  const TextStyle(
-                                fontSize: 17,
+                    child: RadioGroup<int>(
+                      groupValue: answers[currentQuestion],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          answers[currentQuestion] = value;
+                        });
+                      },
+                      child: ListView.builder(
+                        itemCount: question.options.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            child: RadioListTile<int>(
+                              value: index,
+                              title: Text(
+                                question.options[index],
+                                style: const TextStyle(fontSize: 17),
                               ),
                             ),
-                            onChanged:
-                                (value) {
-                              if (value ==
-                                  null) {
-                                return;
-                              }
-
-                              setState(() {
-                                answers[
-                                        currentQuestion] =
-                                    value;
-                              });
-                            },
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton.icon(
-                        onPressed:
-                            currentQuestion ==
-                                    0
-                                ? null
-                                : () {
-                                    setState(() {
-                                      currentQuestion--;
-                                    });
-                                  },
-                        icon: const Icon(
-                          Icons.arrow_back,
-                        ),
-                        label: const Text(
-                          'Previous',
-                        ),
+                        onPressed: currentQuestion == 0
+                            ? null
+                            : () {
+                                setState(() {
+                                  currentQuestion--;
+                                });
+                              },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Previous'),
                       ),
-
-                      if (currentQuestion <
-                          widget.exam.questions
-                                  .length -
-                              1)
+                      if (currentQuestion < widget.exam.questions.length - 1)
                         ElevatedButton.icon(
                           onPressed: () {
                             setState(() {
                               currentQuestion++;
                             });
                           },
-                          icon: const Icon(
-                            Icons.arrow_forward,
-                          ),
-                          label: const Text(
-                            'Next',
-                          ),
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Next'),
                         )
                       else
                         ElevatedButton.icon(
-                          onPressed:
-                              showSubmitConfirmation,
-                          icon: const Icon(
-                            Icons.check,
-                          ),
-                          label: const Text(
-                            'Submit Exam',
-                          ),
+                          onPressed: showSubmitConfirmation,
+                          icon: const Icon(Icons.check),
+                          label: const Text('Submit Exam'),
                         ),
                     ],
                   ),
@@ -431,42 +291,31 @@ class _ExamScreenState extends State<ExamScreen> {
   }
 
   void showSubmitConfirmation() {
-    final unanswered = answers
-        .where((answer) => answer == null)
-        .length;
-
-    showDialog(
+    final unanswered = answers.where((answer) => answer == null).length;
+    showDialog<void>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Submit Exam?',
-          ),
+          title: const Text('Submit Exam?'),
           content: Text(
             unanswered > 0
-                ? 'You have $unanswered unanswered '
-                  'question(s). Are you sure you '
-                  'want to submit?'
-                : 'Are you sure you want to submit '
-                  'the exam?',
+                ? 'You have $unanswered unanswered question(s). '
+                      'Are you sure you want to submit?'
+                : 'Are you sure you want to submit the exam?',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
-              child: const Text(
-                'Continue Exam',
-              ),
+              child: const Text('Continue Exam'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
                 submitExam();
               },
-              child: const Text(
-                'Submit',
-              ),
+              child: const Text('Submit'),
             ),
           ],
         );
@@ -477,32 +326,19 @@ class _ExamScreenState extends State<ExamScreen> {
 
 class _QuestionImage extends StatelessWidget {
   final String imagePath;
-
-  const _QuestionImage({
-    required this.imagePath,
-  });
-
+  const _QuestionImage({required this.imagePath});
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxHeight: 400,
-          maxWidth: 700,
-        ),
+        constraints: const BoxConstraints(maxHeight: 400, maxWidth: 700),
         child: Image.network(
           imagePath,
           fit: BoxFit.contain,
-          errorBuilder: (
-            context,
-            error,
-            stackTrace,
-          ) {
+          errorBuilder: (context, error, stackTrace) {
             return const Padding(
               padding: EdgeInsets.all(20),
-              child: Text(
-                'Unable to load question figure.',
-              ),
+              child: Text('Unable to load question figure.'),
             );
           },
         ),
@@ -514,13 +350,10 @@ class _QuestionImage extends StatelessWidget {
 class ExamResultScreen extends StatelessWidget {
   final String username;
   final Exam exam;
-
   final int correct;
   final int wrong;
   final int unanswered;
-
   final double marks;
-
   const ExamResultScreen({
     super.key,
     required this.username,
@@ -530,112 +363,66 @@ class ExamResultScreen extends StatelessWidget {
     required this.unanswered,
     required this.marks,
   });
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Exam Result',
-        ),
+        title: const Text('Exam Result'),
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 700,
-          ),
+          constraints: const BoxConstraints(maxWidth: 700),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const Icon(
-                  Icons.emoji_events,
-                  size: 80,
-                ),
-
+                const Icon(Icons.emoji_events, size: 80),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Exam Completed',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
                   exam.title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                  ),
+                  style: const TextStyle(fontSize: 20),
                   textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 30),
-
-                // --------------------------------
-                // AD AREA
-                // --------------------------------
                 const ResultAdPlaceholder(),
-
                 const SizedBox(height: 25),
-
                 Card(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        _ResultRow(
-                          label: 'Student',
-                          value: username,
-                        ),
-                        _ResultRow(
-                          label: 'Correct',
-                          value:
-                              correct.toString(),
-                        ),
-                        _ResultRow(
-                          label: 'Wrong',
-                          value:
-                              wrong.toString(),
-                        ),
+                        _ResultRow(label: 'Student', value: username),
+                        _ResultRow(label: 'Correct', value: correct.toString()),
+                        _ResultRow(label: 'Wrong', value: wrong.toString()),
                         _ResultRow(
                           label: 'Unanswered',
-                          value:
-                              unanswered.toString(),
+                          value: unanswered.toString(),
                         ),
                         const Divider(),
                         _ResultRow(
                           label: 'Final Marks',
-                          value:
-                              marks.toString(),
+                          value: marks.toString(),
                           bold: true,
                         ),
                       ],
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 SizedBox(
                   width: 220,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context)
-                          .popUntil(
-                        (route) => route.isFirst,
-                      );
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
-                    child: const Text(
-                      'Finish',
-                    ),
+                    child: const Text('Finish'),
                   ),
                 ),
               ],
@@ -647,44 +434,26 @@ class ExamResultScreen extends StatelessWidget {
   }
 }
 
-// Temporary ad area.
-// Later this exact widget will be replaced
-// with the real Google AdSense integration.
 class ResultAdPlaceholder extends StatelessWidget {
-  const ResultAdPlaceholder({
-    super.key,
-  });
-
+  const ResultAdPlaceholder({super.key});
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 120,
-      ),
+      constraints: const BoxConstraints(minHeight: 120),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.shade400,
-        ),
-        borderRadius:
-            BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: const Center(
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.ads_click,
-              size: 35,
-            ),
+            Icon(Icons.ads_click, size: 35),
             SizedBox(height: 8),
             Text(
               'Advertisement',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
@@ -697,40 +466,30 @@ class _ResultRow extends StatelessWidget {
   final String label;
   final String value;
   final bool bold;
-
   const _ResultRow({
     required this.label,
     required this.value,
     this.bold = false,
   });
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
               fontSize: 18,
-              fontWeight: bold
-                  ? FontWeight.bold
-                  : null,
+              fontWeight: bold ? FontWeight.bold : null,
             ),
           ),
           Text(
             value,
             style: TextStyle(
               fontSize: 18,
-              fontWeight: bold
-                  ? FontWeight.bold
-                  : null,
+              fontWeight: bold ? FontWeight.bold : null,
             ),
           ),
         ],

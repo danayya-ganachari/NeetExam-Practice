@@ -1,1 +1,53 @@
-{"hosting":{"public":"build/web","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"**","destination":"/index.html"}]},"flutter":{"platforms":{"android":{"default":{"projectId":"neetexamspractice","appId":"1:773566336522:android:c0b753fc302d5a66d9d9f3","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"neetexamspractice","configurations":{"android":"1:773566336522:android:c0b753fc302d5a66d9d9f3","ios":"1:773566336522:ios:b26d79dff6cfd1f1d9d9f3","macos":"1:773566336522:ios:b26d79dff6cfd1f1d9d9f3","web":"1:773566336522:web:edf900bb53522990d9d9f3","windows":"1:773566336522:web:9766756e74c9d924d9d9f3"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "neetexamspractice",
+          "appId": "1:773566336522:android:c0b753fc302d5a66d9d9f3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "neetexamspractice",
+          "configurations": {
+            "android": "1:773566336522:android:c0b753fc302d5a66d9d9f3",
+            "ios": "1:773566336522:ios:b26d79dff6cfd1f1d9d9f3",
+            "macos": "1:773566336522:ios:b26d79dff6cfd1f1d9d9f3",
+            "web": "1:773566336522:web:edf900bb53522990d9d9f3",
+            "windows": "1:773566336522:web:9766756e74c9d924d9d9f3"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

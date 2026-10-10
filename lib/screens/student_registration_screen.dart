@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'student_home_screen.dart';
+
 class StudentRegistrationScreen extends StatefulWidget {
   const StudentRegistrationScreen({super.key});
 
@@ -12,181 +14,116 @@ class StudentRegistrationScreen extends StatefulWidget {
 
 class _StudentRegistrationScreenState
     extends State<StudentRegistrationScreen> {
-  final TextEditingController nameController =
-      TextEditingController();
-
-  final TextEditingController usernameController =
-      TextEditingController();
-
-  final TextEditingController passwordController =
-      TextEditingController();
-
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   bool hidePassword = true;
-  bool hideConfirmPassword = true;
   bool isLoading = false;
+
+  String makeLoginId(String username) {
+    return '${username.trim().toLowerCase()}'
+        '@students.neetexamspractice.firebaseapp.com';
+  }
 
   @override
   void dispose() {
-    nameController.dispose();
     usernameController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-
     super.dispose();
   }
 
-  // Converts the student's username into an internal
-  // Firebase email address.
-  //
-  // The student never sees or enters this email.
-  String makeFirebaseEmail(String username) {
-    return '${username.toLowerCase()}@students.neetexamspractice.local';
-  }
-
-  Future<void> createAccount() async {
-    final name = nameController.text.trim();
+  Future<void> register() async {
     final username =
         usernameController.text.trim().toLowerCase();
     final password = passwordController.text;
-    final confirmPassword =
-        confirmPasswordController.text;
+    final confirmPassword = confirmPasswordController.text;
 
-    if (name.isEmpty) {
-      showMessage('Please enter your name.');
-      return;
-    }
-
-    if (username.isEmpty) {
-      showMessage('Please enter a username.');
-      return;
-    }
-
-    if (!RegExp(r'^[a-z0-9_]{3,20}$')
-        .hasMatch(username)) {
+    if (!RegExp(r'^[a-z0-9_.-]{3,30}$').hasMatch(username)) {
       showMessage(
-        'Username must be 3-20 characters and use only '
-        'letters, numbers, or underscore.',
+        'Username must be 3–30 characters: '
+        'letters, numbers, dots, underscores or hyphens.',
       );
       return;
     }
 
     if (password.length < 6) {
-      showMessage(
-        'Password must contain at least 6 characters.',
-      );
+      showMessage('Password must contain at least 6 characters.');
       return;
     }
 
     if (password != confirmPassword) {
-      showMessage(
-        'Passwords do not match.',
-      );
+      showMessage('Passwords do not match.');
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
+
+    User? createdUser;
 
     try {
-      final firebaseEmail =
-          makeFirebaseEmail(username);
-
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: firebaseEmail,
+        email: makeLoginId(username),
         password: password,
       );
 
-      final user = credential.user;
+      createdUser = credential.user;
 
-      if (user == null) {
-        showMessage(
-          'Account creation failed.',
-        );
+      if (createdUser == null) {
+        showMessage('Registration failed. Please try again.');
         return;
       }
 
       await FirebaseFirestore.instance
           .collection('students')
-          .doc(user.uid)
+          .doc(createdUser.uid)
           .set({
         'username': username,
-        'name': name,
+        'email': makeLoginId(username),
         'role': 'student',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      showMessage(
-        'Student account created successfully.',
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) =>
+              StudentHomeScreen(username: username),
+        ),
       );
-
-      await Future.delayed(
-        const Duration(milliseconds: 700),
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
-      String message;
-
-      switch (e.code) {
-        case 'email-already-in-use':
-          message =
-              'That username is already taken.';
-          break;
-
-        case 'weak-password':
-          message =
-              'Password is too weak.';
-          break;
-
-        case 'network-request-failed':
-          message =
-              'Network error. Check your internet connection.';
-          break;
-
-        default:
-          message =
-              'Could not create account. Please try again.';
+      if (e.code == 'email-already-in-use') {
+        showMessage('That username is already taken.');
+      } else if (e.code == 'weak-password') {
+        showMessage('Please choose a stronger password.');
+      } else {
+        showMessage(e.message ?? 'Registration failed.');
+      }
+    } catch (_) {
+      // If profile creation failed, don't leave the user
+      // signed in without a student profile.
+      if (createdUser != null) {
+        await FirebaseAuth.instance.signOut();
       }
 
-      showMessage(message);
-    } catch (e) {
       showMessage(
-        'Something went wrong. Please try again.',
+        'Could not complete registration. Please try again.',
       );
     } finally {
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
       }
     }
   }
 
   void showMessage(String message) {
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-        .hideCurrentSnackBar();
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -194,95 +131,48 @@ class _StudentRegistrationScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Student Account'),
+        title: const Text('Student Registration'),
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 450,
-          ),
+          constraints: const BoxConstraints(maxWidth: 450),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.person_add,
-                  size: 80,
-                ),
-
+                const Icon(Icons.person_add, size: 75),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Create Student Account',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 27,
                     fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  'Create your account using a username '
-                  'and password.',
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 35),
-
-                TextField(
-                  controller: nameController,
-                  textInputAction:
-                      TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter your name',
-                    border: OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(Icons.person),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
+                const SizedBox(height: 30),
                 TextField(
                   controller: usernameController,
-                  textInputAction:
-                      TextInputAction.next,
-                  autocorrect: false,
-                  enableSuggestions: false,
                   decoration: const InputDecoration(
-                    labelText: 'Username',
+                    labelText: 'Choose Username',
                     hintText: 'Example: student01',
                     border: OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(Icons.account_circle),
+                    prefixIcon: Icon(Icons.person),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 TextField(
                   controller: passwordController,
                   obscureText: hidePassword,
-                  textInputAction:
-                      TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText:
-                        'At least 6 characters',
-                    border:
-                        const OutlineInputBorder(),
-                    prefixIcon:
-                        const Icon(Icons.lock),
+                    labelText: 'Create Password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       onPressed: () {
                         setState(() {
-                          hidePassword =
-                              !hidePassword;
+                          hidePassword = !hidePassword;
                         });
                       },
                       icon: Icon(
@@ -293,68 +183,26 @@ class _StudentRegistrationScreenState
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 TextField(
-                  controller:
-                      confirmPasswordController,
-                  obscureText:
-                      hideConfirmPassword,
-                  textInputAction:
-                      TextInputAction.done,
-                  onSubmitted: (_) {
-                    if (!isLoading) {
-                      createAccount();
-                    }
-                  },
-                  decoration: InputDecoration(
-                    labelText:
-                        'Confirm Password',
-                    hintText:
-                        'Enter password again',
-                    border:
-                        const OutlineInputBorder(),
-                    prefixIcon:
-                        const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          hideConfirmPassword =
-                              !hideConfirmPassword;
-                        });
-                      },
-                      icon: Icon(
-                        hideConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                    ),
+                  controller: confirmPasswordController,
+                  obscureText: hidePassword,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock_outline),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 SizedBox(
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: isLoading
-                        ? null
-                        : createAccount,
+                    onPressed: isLoading ? null : register,
                     child: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child:
-                                CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
+                        ? const CircularProgressIndicator()
                         : const Text(
                             'Create Account',
-                            style: TextStyle(
-                              fontSize: 18,
-                            ),
+                            style: TextStyle(fontSize: 18),
                           ),
                   ),
                 ),
